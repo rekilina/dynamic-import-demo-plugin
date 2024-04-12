@@ -21,8 +21,8 @@
     "async",
     "plugin"
   ],
-  "author": "David Aaron Suddjian",
-  "license": "Apache-2.0",
+  "author": "rekilina",
+  "license": "TechAudi-BI",
   "devDependencies": {
     "@airbnb/config-eslint": "^3.1.0",
     "@babel/preset-env": "^7.10.3",

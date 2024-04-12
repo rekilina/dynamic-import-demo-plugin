@@ -1,36 +1,53 @@
-# Dynamic Imports Example Plugin
-
-**Attention: Dynamic plugins are a work-in-progress feature. Please do try it out and give feedback, but use only at your own risk!**
-
-This project is meant to be used as a template to create your own Chart Plugins for Superset.
-
-## Initializing Your Own Plugin
-
-For now, you can fork this project to get started. Delete the `.git` folder and run `git init` if you want a clean commit history.
-
-In the future we plan on adding a Yeoman script, and potentially moving portions of this code into a library to make plugin development simpler.
-
-## Developing Your Plugin
-
-To build the plugin:
-
-```shell
-npm install
-npm run build # or npm run build:watch
+# The first way to handle multiple plugins
+## Project structure
 ```
-
-Superset will need to load your built plugin bundle from somewhere. You can serve the plugin locally using the following command:
-
-```shell
-npm run serve
+my-project/
+├── plugins/
+│   ├── Hello-World-0/
+│   │   ├── src/
+│   │   └── ...
+│   └── Hello-World-1/
+│       ├── src/
+│       └── ...
+├── node_modules/
+├── package.json
+├── webpack.config.js
+└── ...
 ```
-
-While serving up the local plugin, you can add it to your locally running Superset instance under "Custom Plugins". Make sure the `DYNAMIC_PLUGINS` feature flag is on in Superset. Use the the locally hosted bundle url `http://127.0.0.1:8080/main.js` when configuring your plugin.
-
-To build for production:
-
-```shell
-npm run build-prod
+## Update webpack.config.js
 ```
+const fs = require('fs');
+const path = require('path');
 
-The `serve` command should only be used for local development. In production, it is recommended to host the bundle output of `build` (located in `/dist`) on a CDN. The address of the CDN-hosted bundle is then what should be used when adding the plugin to Superset.
+const pluginsDir = path.resolve(__dirname, 'plugins');
+const pluginFolders = fs.readdirSync(pluginsDir).filter(f => fs.statSync(path.join(pluginsDir, f)).isDirectory());
+
+const entry = pluginFolders.reduce((entries, folder) => {
+  entries[folder] = path.resolve(pluginsDir, folder, 'src/entry.ts');
+  return entries;
+}, {});
+
+const config = {
+  entry: entry,
+  output: {
+    filename: '[name]/bundle.js',
+    path: path.resolve(__dirname, 'dist'),
+  },
+  // Rest of the config remains the same
+};
+```
+This script dynamically finds each plugin folder in the plugins directory and creates an entry point for it. The output files are also named according to the plugin folder, keeping builds separated.
+
+## Overview
+After running `npm i && npm build` it will create `dist` folder:
+```
+my-project/
+├── dist/
+│   ├── Hello-World-0/
+│   │   └── bundle.js/
+│   └── Hello-World-1/
+│       └── bundle.js/
+```
+And we can connect plugins with url: http://127.0.0.1:8081/Hello-World-N/bundle.js
+
+Well, it works. But I doubt that's what we need.

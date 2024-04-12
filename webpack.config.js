@@ -1,8 +1,18 @@
 const webpack = require('webpack');
+const fs = require('fs');
 const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const parsedArgs = require('yargs').argv;
 const packageJson = require('./package.json');
+
+const pluginsDir = path.resolve(__dirname, 'plugins');
+const pluginFolders = fs.readdirSync(pluginsDir).filter(f => fs.statSync(path.join(pluginsDir, f)).isDirectory());
+
+const entry = pluginFolders.reduce((entries, folder) => {
+  entries[folder] = path.resolve(pluginsDir, folder, 'src/entry.ts');
+  return entries;
+}, {});
+
 
 // input dir
 const SRC_DIR = path.resolve(__dirname, './src');
@@ -29,14 +39,11 @@ const config = {
   node: {
     fs: 'empty',
   },
-  entry: {
-    main: 'src/entry.ts',
-  },
+  entry: entry,
   output: {
-    path: BUILD_DIR,
-    publicPath: '/dist/',
-    libraryTarget: 'umd',
-  },
+    filename: '[name]/bundle.js',
+    path: path.resolve(__dirname, 'dist'),
+  }, 
   resolve: {
     alias: {
       src: SRC_DIR,
